@@ -190,9 +190,6 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
         <div className="opt-row">
           <span className="opt-label">For trade</span>
           <span className="inline-num">
-            {(['s1', 's2'] as RarityTier[]).some((t) => post.tiers.includes(t) && !settings.autoTradeTiers.includes(t))
-              ? 'stars you marked as willing to trade, plus '
-              : ''}
             cards I have more than
             <button className="icon-btn small" onClick={() => store.updateSettings({ keep: Math.max(0, settings.keep - 1) })} aria-label="Lower">
               <Icon name="minus" size={14} />
@@ -201,7 +198,7 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
             <button className="icon-btn small" onClick={() => store.updateSettings({ keep: settings.keep + 1 })} aria-label="Raise">
               <Icon name="plus" size={14} />
             </button>
-            of. Change which rarities do this in Settings.
+            of, plus cards I picked in Trade mode.
           </span>
         </div>
       </div>
