@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import type { Card, RarityTier } from '../data/types';
 import type { Filters } from './filters';
 import { SEED_COUNTS, SEED_FRIEND_CODE, SEED_STAR_COUNTS, SEED_WANTED } from './seed';
+import { SEED_RARE_COUNTS } from './seedRare';
 import { autoQualifies, DEFAULT_AUTO_TRADE_TIERS, isForTrade, type TradeCtx } from './trade';
 
 export type LfRule = 'wanted' | 'below-keep';
@@ -84,6 +85,8 @@ export interface CollectionState {
 const STORAGE_KEY = 'pocket-binder:collection:v1';
 /** Marks that the ★/★★ counts were added to a collection saved before they existed. */
 const STAR_IMPORT = 'import-stars-2026-11-25';
+/** Marks that the ★★★, crown and shiny ✦/✦✦ counts read on 2026-11-26 were added. */
+const RARE_IMPORT = 'import-rare-2026-11-26';
 /** Marks that ★ and ★★ were added to the automatic-trade rarities of an older save. */
 const ONE_STAR_AUTO = 'auto-trade-1-star-2026-11-26';
 const TWO_STAR_AUTO = 'auto-trade-2-star-2026-11-26';
@@ -123,7 +126,7 @@ export function startingCollection(): CollectionState {
 function seedState(): CollectionState {
   return {
     version: 1,
-    counts: { ...SEED_COUNTS, ...SEED_STAR_COUNTS },
+    counts: { ...SEED_COUNTS, ...SEED_STAR_COUNTS, ...SEED_RARE_COUNTS },
     wanted: Object.fromEntries(SEED_WANTED.map((k) => [k, true as const])),
     locked: {},
     forTrade: {},
@@ -131,7 +134,7 @@ function seedState(): CollectionState {
     presets: [],
     log: [],
     trades: [],
-    dismissed: { [STAR_IMPORT]: true, [ONE_STAR_AUTO]: true, [TWO_STAR_AUTO]: true },
+    dismissed: { [STAR_IMPORT]: true, [RARE_IMPORT]: true, [ONE_STAR_AUTO]: true, [TWO_STAR_AUTO]: true },
   };
 }
 
@@ -153,6 +156,14 @@ function addStarCounts(s: CollectionState): CollectionState {
   const counts = { ...s.counts };
   for (const [key, n] of Object.entries(SEED_STAR_COUNTS)) if (!(key in counts)) counts[key] = n;
   return { ...s, counts, dismissed: { ...s.dismissed, [STAR_IMPORT]: true } };
+}
+
+/** Adds the ★★★, crown and shiny counts to an older save, once, without touching cards that already have a count. */
+function addRareCounts(s: CollectionState): CollectionState {
+  if (s.dismissed[RARE_IMPORT]) return s;
+  const counts = { ...s.counts };
+  for (const [key, n] of Object.entries(SEED_RARE_COUNTS)) if (!(key in counts)) counts[key] = n;
+  return { ...s, counts, dismissed: { ...s.dismissed, [RARE_IMPORT]: true } };
 }
 
 /** Fills in anything missing from an older or hand-edited save. */
@@ -184,7 +195,7 @@ export function normalizeState(raw: Partial<CollectionState> | null | undefined)
 function load(): CollectionState {
   try {
     const text = localStorage.getItem(STORAGE_KEY);
-    if (text) return addStarAuto(addStarCounts(normalizeState(JSON.parse(text))));
+    if (text) return addStarAuto(addRareCounts(addStarCounts(normalizeState(JSON.parse(text)))));
   } catch {
     /* fall through to the starting data */
   }
