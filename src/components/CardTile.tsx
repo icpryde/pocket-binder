@@ -24,7 +24,7 @@ export function tapCard(card: Card, mode: TapMode, onOpen: (card: Card) => void)
       onOpen(card);
       break;
     case 'need':
-      store.toggleWanted(card.key, (on) => `${card.name} ${on ? 'added to' : 'removed from'} your needs`);
+      store.toggleWanted(card.key, (on) => `${card.name} ${on ? 'added to' : 'removed from'} your needs`, card.tier);
       break;
     case 'trade':
       store.toggleForTrade(card);

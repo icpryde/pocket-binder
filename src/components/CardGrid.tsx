@@ -93,6 +93,7 @@ export function CardGrid({ catalog, cards, filters, counts, wanted, trade, mode,
                             below.map((c) => c.key),
                             true,
                             `Marked ${below.length} ${set.name} card${below.length === 1 ? '' : 's'} as needed`,
+                            below.map((c) => c.tier),
                           )
                         }
                       >
@@ -125,6 +126,7 @@ export function CardGrid({ catalog, cards, filters, counts, wanted, trade, mode,
                             pickable.map((c) => c.key),
                             true,
                             `Put ${pickable.length} ${set.name} card${pickable.length === 1 ? '' : 's'} on your For Trade list`,
+                            pickable.map((c) => c.tier),
                           )
                         }
                       >

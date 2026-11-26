@@ -133,7 +133,7 @@ export function CardDetail({ card, catalog, list, onNavigate, onClose, tagOf }: 
           <div className="toggles">
             <button
               className={`toggle-btn need ${wanted ? 'on' : ''}`}
-              onClick={() => store.toggleWanted(card.key, (on) => `${card.name} ${on ? 'added to' : 'removed from'} your needs`)}
+              onClick={() => store.toggleWanted(card.key, (on) => `${card.name} ${on ? 'added to' : 'removed from'} your needs`, card.tier)}
             >
               <Icon name="heart" size={18} fill={wanted} /> {wanted ? 'On my need list' : 'I need this'}
             </button>

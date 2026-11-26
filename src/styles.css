@@ -1379,3 +1379,20 @@ select {
 .sync-badge.sync-error {
   color: var(--need);
 }
+
+/* Share: rarities with picks that the post leaves out */
+.post-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--spare) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--spare) 45%, transparent);
+  font-size: 14px;
+}
+.post-hint .chip b {
+  color: var(--spare);
+  margin-left: 2px;
+}

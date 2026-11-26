@@ -206,6 +206,13 @@ function commit(next: CollectionState, label?: string) {
   if (label) notify(label, true);
 }
 
+/** Adds rarities to the share post, so cards you just picked actually show up in it. */
+function withPostTiers(s: CollectionState, tiers: RarityTier[] | undefined): CollectionState {
+  const add = (tiers ?? []).filter((t) => !s.settings.post.tiers.includes(t));
+  if (!add.length) return s;
+  return { ...s, settings: { ...s.settings, post: { ...s.settings.post, tiers: [...s.settings.post.tiers, ...new Set(add)] } } };
+}
+
 function withLog(s: CollectionState, entries: LogEntry[]): LogEntry[] {
   const log = [...s.log, ...entries];
   return log.length > MAX_LOG ? log.slice(log.length - MAX_LOG) : log;
@@ -263,21 +270,23 @@ export const store = {
     commit(next, label);
   },
 
-  toggleWanted(key: string, label: (on: boolean) => string) {
+  toggleWanted(key: string, label: (on: boolean) => string, tier?: RarityTier) {
     const wanted = { ...state.wanted };
     const on = !wanted[key];
     if (on) wanted[key] = true;
     else delete wanted[key];
-    commit({ ...state, wanted }, label(on));
+    const next = { ...state, wanted };
+    commit(on ? withPostTiers(next, tier && [tier]) : next, label(on));
   },
 
-  setWanted(keys: string[], on: boolean, label: string) {
+  setWanted(keys: string[], on: boolean, label: string, tiers?: RarityTier[]) {
     const wanted = { ...state.wanted };
     for (const k of keys) {
       if (on) wanted[k] = true;
       else delete wanted[k];
     }
-    commit({ ...state, wanted }, label);
+    const next = { ...state, wanted };
+    commit(on ? withPostTiers(next, tiers) : next, label);
   },
 
   toggleLocked(key: string, label: (on: boolean) => string) {
@@ -313,11 +322,12 @@ export const store = {
       delete locked[card.key];
       if (!autoQualifies(card, ctx)) forTrade[card.key] = true;
     }
-    commit({ ...state, locked, forTrade }, `${card.name} ${on ? 'taken off' : 'put on'} your For Trade list`);
+    const next = { ...state, locked, forTrade };
+    commit(on ? next : withPostTiers(next, [card.tier]), `${card.name} ${on ? 'taken off' : 'put on'} your For Trade list`);
   },
 
   /** Marks or unmarks many cards as willing to trade at once. */
-  setForTrade(keys: string[], on: boolean, label: string) {
+  setForTrade(keys: string[], on: boolean, label: string, tiers?: RarityTier[]) {
     const forTrade = { ...state.forTrade };
     const locked = { ...state.locked };
     for (const k of keys) {
@@ -326,7 +336,8 @@ export const store = {
         delete locked[k];
       } else delete forTrade[k];
     }
-    commit({ ...state, forTrade, locked }, label);
+    const next = { ...state, forTrade, locked };
+    commit(on ? withPostTiers(next, tiers) : next, label);
   },
 
   /** One in-game trade: give one copy, get one copy (either side optional). */
