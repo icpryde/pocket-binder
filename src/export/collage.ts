@@ -1,5 +1,7 @@
-// Draws the "one big image" export: sections of card art (Looking for / For trade /
-// Everything I have) with the friend code on top, ready to post or save.
+// Draws the image export: sections of card art (Looking for / For trade / Everything
+// I have) with the friend code on top, ready to post or save. Long lists are split
+// into several images, because Discord shrinks one very tall image until the cards
+// are unreadable.
 import type { Card } from '../data/types';
 import { imageCandidates } from '../data/images';
 
@@ -11,13 +13,21 @@ export interface CollageBlock {
 
 export interface CollageOptions {
   columns: number;
+  /** Card rows per image; 0 = everything in one image. */
+  rowsPerImage: number;
   theme: 'dark' | 'light';
   heading: string;
   subheading?: string;
   showCaptions: boolean;
 }
 
-const CARD_W = 180;
+/** A section as it appears on one image (a long section continues on the next). */
+interface PageBlock extends CollageBlock {
+  total: number;
+  continued: boolean;
+}
+
+const CARD_W = 220;
 const CARD_H = Math.round(CARD_W / 0.7168); // card art is 367×512
 const GAP = 14;
 const PAD = 36;
@@ -54,7 +64,8 @@ async function loadAll(cards: Card[], onProgress?: (done: number, total: number)
   const worker = async () => {
     while (next < unique.length) {
       const card = unique[next++];
-      out.set(card.id, await loadImage(imageCandidates(card, 'thumb')));
+      // The larger scans keep the cards sharp at this size.
+      out.set(card.id, await loadImage(imageCandidates(card, 'large')));
       onProgress?.(++done, unique.length);
     }
   };
@@ -72,13 +83,55 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
+/** Splits sections into images of at most `rows` card rows each. */
+export function paginate(blocks: CollageBlock[], cols: number, rows: number): PageBlock[][] {
+  const full = blocks.filter((b) => b.items.length);
+  if (!rows) return [full.map((b) => ({ ...b, total: b.items.length, continued: false }))];
+  const pages: PageBlock[][] = [];
+  let page: PageBlock[] = [];
+  let left = rows;
+  for (const b of full) {
+    for (let i = 0; i < b.items.length; ) {
+      if (left === 0) {
+        pages.push(page);
+        page = [];
+        left = rows;
+      }
+      const take = Math.min(b.items.length - i, left * cols);
+      page.push({ ...b, items: b.items.slice(i, i + take), total: b.items.length, continued: i > 0 });
+      left -= Math.ceil(take / cols);
+      i += take;
+    }
+  }
+  if (page.length || !pages.length) pages.push(page);
+  return pages;
+}
+
 export async function renderCollage(
   blocks: CollageBlock[],
   opts: CollageOptions,
   onProgress?: (done: number, total: number) => void,
-): Promise<Blob> {
-  const blocksWithCards = blocks.filter((b) => b.items.length);
+): Promise<Blob[]> {
   const cols = Math.max(2, Math.min(16, opts.columns));
+  const pages = paginate(blocks, cols, Math.max(0, opts.rowsPerImage));
+  const images = await loadAll(
+    pages.flat().flatMap((b) => b.items.map((i) => i.card)),
+    onProgress,
+  );
+  const out: Blob[] = [];
+  for (let p = 0; p < pages.length; p++) {
+    const heading = pages.length > 1 ? `${opts.heading}  ·  ${p + 1}/${pages.length}` : opts.heading;
+    out.push(await renderPage(pages[p], { ...opts, heading }, cols, images));
+  }
+  return out;
+}
+
+async function renderPage(
+  blocksWithCards: PageBlock[],
+  opts: CollageOptions,
+  cols: number,
+  images: Map<string, HTMLImageElement | null>,
+): Promise<Blob> {
   const cellH = CARD_H + (opts.showCaptions ? CAPTION_H : 0) + GAP;
   const width = PAD * 2 + cols * CARD_W + (cols - 1) * GAP;
   let height = PAD + HEADER_H;
@@ -117,11 +170,6 @@ export async function renderCollage(
     ctx.fillText(opts.subheading, PAD, PAD + 46);
   }
 
-  const images = await loadAll(
-    blocksWithCards.flatMap((b) => b.items.map((i) => i.card)),
-    onProgress,
-  );
-
   let y = PAD + HEADER_H;
   if (!blocksWithCards.length) {
     ctx.fillStyle = muted;
@@ -131,7 +179,7 @@ export async function renderCollage(
   for (const block of blocksWithCards) {
     // Section title pill
     ctx.font = font(800, 24);
-    const label = `${block.title} (${block.items.length})`;
+    const label = `${block.title} (${block.total})${block.continued ? ', continued' : ''}`;
     const lw = ctx.measureText(label).width + 32;
     ctx.fillStyle = block.color;
     roundRect(ctx, PAD, y + 8, lw, 40, 20);
@@ -182,6 +230,7 @@ export async function renderCollage(
   }
 
   return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not create the image'))), 'image/png'),
+    // JPEG keeps each image under ~1 MB, so several upload quickly from a phone.
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not create the image'))), 'image/jpeg', 0.92),
   );
 }

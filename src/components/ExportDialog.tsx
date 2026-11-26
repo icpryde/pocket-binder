@@ -64,20 +64,11 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
   }, [catalog, state, post.tiers, forTrade, wanted]);
 
   // ---- image tab
-  const [imgUrl, setImgUrl] = useState<string>();
-  const [blob, setBlob] = useState<Blob>();
+  const [shots, setShots] = useState<{ blob: Blob; url: string; name: string }[]>([]);
   const [progress, setProgress] = useState<string>();
-  useEffect(
-    () => () => {
-      if (imgUrl) URL.revokeObjectURL(imgUrl);
-    },
-    [imgUrl],
-  );
-  // Settings changed: the old picture is out of date.
-  useEffect(() => {
-    setBlob(undefined);
-    setImgUrl(undefined);
-  }, [state]);
+  useEffect(() => () => shots.forEach((x) => URL.revokeObjectURL(x.url)), [shots]);
+  // Settings changed: the old pictures are out of date.
+  useEffect(() => setShots([]), [state]);
 
   const generate = async () => {
     const lists = collectLists(catalog, state, post.tiers, post.lfRule);
@@ -122,6 +113,7 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
         blocks,
         {
           columns: collage.columns,
+          rowsPerImage: collage.rowsPerImage,
           theme: collage.theme,
           heading: `Trade list ${tierText}`,
           subheading: [
@@ -134,8 +126,14 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
         },
         (done, total) => setProgress(`Loading card art ${done}/${total}…`),
       );
-      setBlob(out);
-      setImgUrl(URL.createObjectURL(out));
+      const day = new Date().toISOString().slice(0, 10);
+      setShots(
+        out.map((blob, i) => ({
+          blob,
+          url: URL.createObjectURL(blob),
+          name: out.length > 1 ? `trade-list-${day}-${i + 1}.jpg` : `trade-list-${day}.jpg`,
+        })),
+      );
     } catch (err) {
       notify(`Could not make the image: ${(err as Error).message}`);
     } finally {
@@ -143,9 +141,27 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
     }
   };
 
-  const fileName = `trade-list-${new Date().toISOString().slice(0, 10)}.png`;
-  const canShareFile =
-    typeof navigator !== 'undefined' && !!blob && !!navigator.canShare?.({ files: [new File([blob], fileName, { type: 'image/png' })] });
+  const files = shots.map((x) => new File([x.blob], x.name, { type: x.blob.type }));
+  const canShareFiles = typeof navigator !== 'undefined' && files.length > 0 && !!navigator.canShare?.({ files });
+  const copyImage = async (blob: Blob) => {
+    try {
+      // Browsers only put PNG images on the clipboard.
+      const png =
+        blob.type === 'image/png'
+          ? blob
+          : await createImageBitmap(blob).then((bmp) => {
+              const c = document.createElement('canvas');
+              c.width = bmp.width;
+              c.height = bmp.height;
+              c.getContext('2d')!.drawImage(bmp, 0, 0);
+              return new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('copy'))), 'image/png'));
+            });
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+      notify('Image copied. Paste it into Discord.');
+    } catch {
+      notify("This browser won't copy images. Use Save instead.");
+    }
+  };
 
   return (
     <Modal title="Share your trade list" onClose={onClose} wide>
@@ -154,7 +170,7 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
           <Icon name="text" size={18} /> Discord text
         </button>
         <button role="tab" aria-selected={tab === 'image'} className={`tab ${tab === 'image' ? 'on' : ''}`} onClick={() => setTab('image')}>
-          <Icon name="image" size={18} /> One big image
+          <Icon name="image" size={18} /> Images
         </button>
       </div>
 
@@ -304,6 +320,16 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
               Light background
             </label>
             <label className="range">
+              Rows per image <b>{collage.rowsPerImage || 'all'}</b>
+              <input
+                type="range"
+                min={2}
+                max={13}
+                value={collage.rowsPerImage || 13}
+                onChange={(e) => store.updateCollage({ rowsPerImage: Number(e.target.value) >= 13 ? 0 : Number(e.target.value) })}
+              />
+            </label>
+            <label className="range">
               Cards per row <b>{collage.columns}</b>
               <input
                 type="range"
@@ -316,47 +342,46 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
           </div>
           <div className="image-actions">
             <button className="btn btn-primary" onClick={generate} disabled={Boolean(progress)}>
-              <Icon name="image" size={18} /> {imgUrl ? 'Make it again' : 'Make the image'}
+              <Icon name="image" size={18} /> {shots.length ? 'Make them again' : 'Make the images'}
             </button>
-            {blob && (
+            {shots.length > 0 && (
               <>
-                <button className="btn" onClick={() => downloadBlob(blob, fileName)}>
-                  <Icon name="download" size={18} /> Save
+                {canShareFiles && (
+                  <button className="btn" onClick={() => navigator.share({ files }).catch(() => undefined)}>
+                    <Icon name="share" size={18} /> Share {shots.length > 1 ? `all ${shots.length}` : ''}
+                  </button>
+                )}
+                <button className="btn" onClick={() => shots.forEach((x, i) => setTimeout(() => downloadBlob(x.blob, x.name), i * 300))}>
+                  <Icon name="download" size={18} /> Save {shots.length > 1 ? `all ${shots.length}` : ''}
                 </button>
-                {'ClipboardItem' in window && (
-                  <button
-                    className="btn"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                        notify('Image copied. Paste it into Discord.');
-                      } catch {
-                        notify("This browser won't copy images. Use Save instead.");
-                      }
-                    }}
-                  >
-                    <Icon name="copy" size={18} /> Copy image
-                  </button>
-                )}
-                {canShareFile && (
-                  <button
-                    className="btn"
-                    onClick={() =>
-                      navigator.share({ files: [new File([blob], fileName, { type: 'image/png' })] }).catch(() => undefined)
-                    }
-                  >
-                    <Icon name="share" size={18} /> Share
-                  </button>
-                )}
               </>
             )}
             {progress && <span className="muted small">{progress}</span>}
           </div>
-          {imgUrl && (
-            <div className="collage-preview">
-              <img src={imgUrl} alt="Your trade list as one image" />
-            </div>
+          {shots.length > 1 && (
+            <p className="muted small">
+              {shots.length} images, so every card stays sharp in Discord. Attach them all to one message
+              {shots.length > 10 ? ' (Discord takes up to 10 per message, so post the rest in a second one)' : ''}.
+            </p>
           )}
+          {shots.map((x, i) => (
+            <div key={x.url} className="collage-preview">
+              <div className="collage-head">
+                <span className="muted small">{shots.length > 1 ? `Image ${i + 1} of ${shots.length}` : 'Your image'}</span>
+                <span className="btn-row">
+                  {'ClipboardItem' in window && (
+                    <button className="btn small" onClick={() => copyImage(x.blob)}>
+                      <Icon name="copy" size={16} /> Copy
+                    </button>
+                  )}
+                  <button className="btn small" onClick={() => downloadBlob(x.blob, x.name)}>
+                    <Icon name="download" size={16} /> Save
+                  </button>
+                </span>
+              </div>
+              <img src={x.url} alt={`Trade list image ${i + 1} of ${shots.length}`} />
+            </div>
+          ))}
         </>
       )}
     </Modal>

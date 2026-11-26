@@ -41,7 +41,7 @@ Every push to `main` builds the app and publishes it to GitHub Pages (`.github/w
 - **Log a trade.** Pick the card you gave and the card you got, in the same rarity. Both counts update, and the card you got leaves your need list once you have enough.
 - **Share list:**
   - **Discord text** in the format `[Code] … / ◆◆◆◆ / [[LF]] / [DF] Mega Greninja, … / [[FT]] / …`. You choose which rarities go in, and the text splits itself into several messages if it runs over Discord's 2,000-character limit.
-  - **One big image**: Looking for / For trade / Everything I have, with the friend code on top. You can save, copy or share it.
+  - **Images**: Looking for / For trade / Everything I have, with the friend code on top. Long lists are split into several sharp images (3 rows each by default, changeable) so Discord doesn't shrink them. Share or save them all at once, or copy one at a time.
 - **Undo.** The Undo button or Cmd+Z reverts the last change.
 - **Backups.** Download a backup file, or move everything between devices with a transfer code (Settings).
 

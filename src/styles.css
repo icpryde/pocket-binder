@@ -1396,3 +1396,21 @@ select {
   color: var(--spare);
   margin-left: 2px;
 }
+
+/* Share: one preview per image */
+.collage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.collage-preview + .collage-preview {
+  margin-top: 12px;
+}
+.btn.small {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+}

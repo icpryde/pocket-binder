@@ -23,6 +23,8 @@ export interface PostSettings {
 export interface CollageSettings {
   sections: CollageSection[];
   columns: number;
+  /** Card rows per image; 0 = one long image. */
+  rowsPerImage: number;
   showCounts: boolean;
   showTags: boolean;
   theme: 'dark' | 'light';
@@ -103,6 +105,7 @@ export const DEFAULT_SETTINGS: Settings = {
   collage: {
     sections: ['lf', 'ft'],
     columns: 8,
+    rowsPerImage: 3,
     showCounts: true,
     showTags: true,
     theme: 'dark',
