@@ -14,6 +14,8 @@ import { Icon } from './components/Icon';
 import { SettingsDialog } from './components/SettingsDialog';
 import { Toast } from './components/Toast';
 import { TradeDialog } from './components/TradeDialog';
+import { SyncBadge, SyncPanel } from './components/SyncPanel';
+import { Modal } from './components/Modal';
 import type { TapMode } from './components/CardTile';
 
 const FILTER_KEY = 'pocket-binder:filters:v1';
@@ -70,7 +72,7 @@ export default function App() {
   const [filters, setFiltersState] = useState<Filters>(loadFilters);
   const [mode, setModeState] = useState<TapMode>(loadMode);
   const [openCard, setOpenCard] = useState<Card | null>(null);
-  const [dialog, setDialog] = useState<'trade' | 'export' | 'settings' | null>(null);
+  const [dialog, setDialog] = useState<'trade' | 'export' | 'settings' | 'sync' | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -280,6 +282,7 @@ export default function App() {
                 Clear filters
               </button>
             )}
+            <SyncBadge onOpen={() => setDialog('sync')} />
             {undoLabel && (
               <button className="link-btn undo-link" onClick={() => store.undo()} title={`Undo: ${undoLabel}`}>
                 <Icon name="undo" size={14} /> Undo
@@ -318,7 +321,14 @@ export default function App() {
       )}
       {dialog === 'trade' && <TradeDialog catalog={catalog} onClose={() => setDialog(null)} tagOf={tagOf} />}
       {dialog === 'export' && <ExportDialog catalog={catalog} onClose={() => setDialog(null)} tagOf={tagOf} />}
-      {dialog === 'settings' && <SettingsDialog catalog={catalog} onClose={() => setDialog(null)} onRefresh={refresh} />}
+      {dialog === 'settings' && (
+        <SettingsDialog catalog={catalog} onClose={() => setDialog(null)} onRefresh={refresh} onOpenSync={() => setDialog('sync')} />
+      )}
+      {dialog === 'sync' && (
+        <Modal title="Sync between devices" onClose={() => setDialog(null)}>
+          <SyncPanel />
+        </Modal>
+      )}
       <Toast />
     </div>
   );

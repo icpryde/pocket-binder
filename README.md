@@ -4,7 +4,7 @@ A personal tracker for Pokémon TCG Pocket. It shows every card with its art, ho
 
 **Use it:** https://icpryde.github.io/pocket-binder/ (on iPhone: open it in Safari, then Share → Add to Home Screen).
 
-Your counts are saved in each browser separately. To move them between your Mac and iPhone, use Settings → transfer code.
+**Sync between devices:** tap **Sync** (next to the card count) and paste a GitHub token that can edit only this repo, once on each device. Your collection is then saved to `collection.json` on this repo's `data` branch about a second after each change, and your other devices pick it up within 30 seconds, or right away when you switch back to them. Changes from different devices are merged card by card, so a trade logged on your phone and a count fixed on your computer both survive. Without a token, the app keeps everything in that browser only (a transfer code or backup file in Settings moves it by hand).
 
 ## Run it
 

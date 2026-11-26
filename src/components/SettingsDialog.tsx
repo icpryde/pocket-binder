@@ -13,9 +13,10 @@ interface Props {
   catalog: Catalog;
   onClose: () => void;
   onRefresh: () => Promise<string>;
+  onOpenSync: () => void;
 }
 
-export function SettingsDialog({ catalog, onClose, onRefresh }: Props) {
+export function SettingsDialog({ catalog, onClose, onRefresh, onOpenSync }: Props) {
   const settings = useCollection((s) => s.settings);
   const fileRef = useRef<HTMLInputElement>(null);
   const [checking, setChecking] = useState(false);
@@ -131,9 +132,14 @@ export function SettingsDialog({ catalog, onClose, onRefresh }: Props) {
         <section>
           <h3>Backup and other devices</h3>
           <p className="muted small">
-            Your collection is saved in this browser only. To use it on your phone too, copy a transfer code here and paste it into the app there (or
-            send yourself a backup file).
+            Turn on sync to keep your iPhone and computer in step on their own. Without it, your collection is saved in this browser only, and a
+            transfer code or backup file moves it by hand.
           </p>
+          <div className="btn-row">
+            <button className="btn btn-primary" onClick={onOpenSync}>
+              <Icon name="cloud" size={18} /> Sync between devices
+            </button>
+          </div>
           <div className="btn-row">
             <button className="btn" onClick={() => downloadBackup(store.get())}>
               <Icon name="download" size={18} /> Download backup file

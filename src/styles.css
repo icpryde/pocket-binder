@@ -1326,3 +1326,54 @@ select {
   font-weight: 700;
   color: var(--muted);
 }
+
+/* Sync */
+.sync-panel p {
+  margin: 0 0 10px;
+}
+.sync-panel .steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  line-height: 1.5;
+}
+.sync-panel .steps li {
+  margin-bottom: 4px;
+}
+.sync-panel a {
+  color: var(--accent, #7aa2ff);
+}
+.sync-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.sync-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+}
+.sync-synced .sync-dot {
+  background: var(--spare);
+}
+.sync-saving .sync-dot,
+.sync-syncing .sync-dot {
+  background: #ffd27a;
+}
+.sync-error .sync-dot,
+.sync-offline .sync-dot {
+  background: var(--need);
+}
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sync-badge.sync-synced {
+  color: var(--spare);
+}
+.sync-badge.sync-error {
+  color: var(--need);
+}

@@ -24,6 +24,7 @@ const PATHS: Record<string, string> = {
   eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
   hash: 'M5 9h14M5 15h14M10 4 8 20M16 4l-2 16',
   bookmark: 'M6 3h12v18l-6-4-6 4z',
+  cloud: 'M7 19h10.5a4.5 4.5 0 0 0 .4-8.98A6.5 6.5 0 0 0 5.6 9.6 4.75 4.75 0 0 0 7 19z',
 };
 
 export type IconName = keyof typeof PATHS;

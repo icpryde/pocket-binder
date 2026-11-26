@@ -109,6 +109,11 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 };
 
+/** The collection the app starts with (also the common starting point for sync). */
+export function startingCollection(): CollectionState {
+  return seedState();
+}
+
 function seedState(): CollectionState {
   return {
     version: 1,
@@ -358,6 +363,14 @@ export const store = {
 
   replaceAll(next: CollectionState, label: string) {
     commit(normalizeState(next), label);
+  },
+
+  /** Takes in a collection merged with your other devices. Not undoable (the undo history is cleared). */
+  applySynced(next: CollectionState) {
+    undoStack.length = 0;
+    state = next;
+    persistNow();
+    listeners.forEach((l) => l());
   },
 
   resetToStart() {
