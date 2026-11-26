@@ -46,22 +46,6 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
   const result = useMemo(() => buildTradePost(catalog, state), [catalog, state]);
   const tradeTiers = POST_TIER_ORDER.filter((t) => catalog.cards.some((c) => c.tier === t && c.tradeable));
 
-  // Rarities with cards you picked (for trade or as needed) that this post leaves out.
-  const leftOut = useMemo(() => {
-    const ctx = tradeCtx(state);
-    const m = new Map<RarityTier, { ft: number; lf: number }>();
-    for (const c of catalog.cards) {
-      if (c.reprint || !c.tradeable || post.tiers.includes(c.tier)) continue;
-      const ft = forTrade[c.key] && tradeCopies(c, ctx) > 0 ? 1 : 0;
-      const lf = wanted[c.key] ? 1 : 0;
-      if (!ft && !lf) continue;
-      const e = m.get(c.tier) ?? { ft: 0, lf: 0 };
-      e.ft += ft;
-      e.lf += lf;
-      m.set(c.tier, e);
-    }
-    return POST_TIER_ORDER.filter((t) => m.has(t)).map((t) => ({ tier: t, ...m.get(t)! }));
-  }, [catalog, state, post.tiers, forTrade, wanted]);
 
   // ---- image tab
   const [shots, setShots] = useState<{ blob: Blob; url: string; name: string }[]>([]);
@@ -191,23 +175,6 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
             ))}
           </div>
         </div>
-        {leftOut.length > 0 && (
-          <div className="post-hint">
-            <span>Not in this post yet:</span>
-            {leftOut.map((x) => (
-              <button
-                key={x.tier}
-                className="chip chip-tier"
-                onClick={() => store.updatePost({ tiers: [...post.tiers, x.tier] })}
-                title="Add this rarity to the post"
-              >
-                <TierIcon tier={x.tier} />
-                {[x.ft && `${x.ft} for trade`, x.lf && `${x.lf} needed`].filter(Boolean).join(', ')}
-                <b>+ Add</b>
-              </button>
-            ))}
-          </div>
-        )}
         <div className="opt-row">
           <span className="opt-label">Looking for</span>
           <div className="seg">
