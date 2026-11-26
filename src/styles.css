@@ -1163,6 +1163,8 @@ select {
   display: flex;
   align-items: center;
   gap: 10px;
+  /* Fixed at left: 50%, the box would otherwise shrink to half the screen on phones. */
+  width: max-content;
   max-width: min(560px, calc(100vw - 24px));
   padding: 8px 8px 8px 16px;
   border-radius: 14px;
