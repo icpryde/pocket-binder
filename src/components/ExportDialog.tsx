@@ -6,6 +6,7 @@ import { renderCollage, type CollageBlock } from '../export/collage';
 import { notify, store, tradeCtx, useCollection, type CollageSection } from '../state/store';
 import { tradeCopies } from '../state/trade';
 import { downloadBlob } from '../util/transfer';
+import { makeZip } from '../util/zip';
 import { Icon } from './Icon';
 import { Modal } from './Modal';
 import { TierIcon } from './TierIcon';
@@ -318,8 +319,17 @@ export function ExportDialog({ catalog, onClose, tagOf }: Props) {
                     <Icon name="share" size={18} /> Share {shots.length > 1 ? `all ${shots.length}` : ''}
                   </button>
                 )}
-                <button className="btn" onClick={() => shots.forEach((x, i) => setTimeout(() => downloadBlob(x.blob, x.name), i * 300))}>
-                  <Icon name="download" size={18} /> Save {shots.length > 1 ? `all ${shots.length}` : ''}
+                <button
+                  className="btn"
+                  onClick={async () => {
+                    if (shots.length === 1) return downloadBlob(shots[0].blob, shots[0].name);
+                    // Browsers block many downloads at once, so all images go in one .zip.
+                    const zip = await makeZip(shots);
+                    downloadBlob(zip, shots[0].name.replace(/-1\.jpg$/, '.zip'));
+                    notify(`Saved ${shots.length} images in one .zip in your Downloads. Open it to get the images.`);
+                  }}
+                >
+                  <Icon name="download" size={18} /> {shots.length > 1 ? `Save all ${shots.length} (.zip)` : 'Save'}
                 </button>
               </>
             )}
