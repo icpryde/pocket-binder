@@ -13,8 +13,11 @@ export interface TradeCtx {
   autoTradeTiers: RarityTier[];
 }
 
-/** Rarities where spares go on the For Trade list without being picked. */
-export const DEFAULT_AUTO_TRADE_TIERS: RarityTier[] = ['d1', 'd2', 'd3', 'd4'];
+/**
+ * Rarities where spares go on the For Trade list without being picked. The user keeps
+ * 2 of every ◆ and ★ card and trades the rest; ★★ and up are traded case by case.
+ */
+export const DEFAULT_AUTO_TRADE_TIERS: RarityTier[] = ['d1', 'd2', 'd3', 'd4', 's1'];
 
 /** Spares above the keep number would be offered automatically for this card. */
 export function autoQualifies(card: Card, ctx: TradeCtx): boolean {

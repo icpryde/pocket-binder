@@ -26,7 +26,7 @@ Every push to `main` builds the app and publishes it to GitHub Pages (`.github/w
   - **+1** adds a copy (after opening packs or a trade).
   - **−1** removes a copy (when you trade it away).
 - **Card view.** Big image, a large −/+ counter (or type the number), "I need this", "Willing to trade", "Keep all copies" (never trade it), trade cost, and recent changes.
-- **For Trade list.** For ◆ rarities, every copy above your keep number goes on it automatically. For ★ and up, only the cards you pick do (Trade mode, or "Willing to trade" on a card). Settings → "Put extras on my For Trade list automatically for" changes which rarities work which way.
+- **For Trade list.** For ◆ and ★ cards, every copy above your keep number (2) goes on it automatically. For ★★ and up, only the cards you pick do (Trade mode, or "Willing to trade" on a card), even if you have just 1 or 2 copies. Settings → "Put extras on my For Trade list automatically for" changes which rarities work which way.
 - **Filters:**
   - Quick lists such as "◆◆◆◆ I need" and "◆◆◆◆ spares". You can save your own.
   - Collection status: have, none, fewer than your keep number, spares, needed.

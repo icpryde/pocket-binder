@@ -84,6 +84,8 @@ export interface CollectionState {
 const STORAGE_KEY = 'pocket-binder:collection:v1';
 /** Marks that the ★/★★ counts were added to a collection saved before they existed. */
 const STAR_IMPORT = 'import-stars-2026-11-25';
+/** Marks that ★ was added to the automatic-trade rarities of an older save. */
+const ONE_STAR_AUTO = 'auto-trade-1-star-2026-11-26';
 const MAX_LOG = 1000;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -128,8 +130,17 @@ function seedState(): CollectionState {
     presets: [],
     log: [],
     trades: [],
-    dismissed: { [STAR_IMPORT]: true },
+    dismissed: { [STAR_IMPORT]: true, [ONE_STAR_AUTO]: true },
   };
+}
+
+/** Older saves traded ★ only when picked; ★ now works like ◆. Done once, and only if the setting was never changed. */
+function addOneStarAuto(s: CollectionState): CollectionState {
+  if (s.dismissed[ONE_STAR_AUTO]) return s;
+  const tiers = s.settings.autoTradeTiers;
+  const untouched = tiers.length === 4 && ['d1', 'd2', 'd3', 'd4'].every((t) => tiers.includes(t as RarityTier));
+  const settings = untouched ? { ...s.settings, autoTradeTiers: [...tiers, 's1' as RarityTier] } : s.settings;
+  return { ...s, settings, dismissed: { ...s.dismissed, [ONE_STAR_AUTO]: true } };
 }
 
 /** Adds the ★/★★ counts to an older save, once, without touching cards that already have a count. */
@@ -169,7 +180,7 @@ export function normalizeState(raw: Partial<CollectionState> | null | undefined)
 function load(): CollectionState {
   try {
     const text = localStorage.getItem(STORAGE_KEY);
-    if (text) return addStarCounts(normalizeState(JSON.parse(text)));
+    if (text) return addOneStarAuto(addStarCounts(normalizeState(JSON.parse(text))));
   } catch {
     /* fall through to the starting data */
   }

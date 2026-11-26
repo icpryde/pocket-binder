@@ -256,7 +256,7 @@ export default function App() {
           {!dismissed.intro && (
             <div className="banner">
               <p>
-                Your <b>◆◆◆◆</b>, <b>★</b> and <b>★★</b> counts from the game are filled in, and the 7 you need are marked. Stars only go on your
+                Your <b>◆◆◆◆</b>, <b>★</b> and <b>★★</b> counts from the game are filled in, and the 7 you need are marked. ★★ cards only go on your
                 For Trade list when you pick them: use <b>Trade</b> mode and tap the ones you're willing to trade.
               </p>
               <button className="icon-btn small" onClick={() => store.dismiss('intro')} aria-label="Dismiss">
