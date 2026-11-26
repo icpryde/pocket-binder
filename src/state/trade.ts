@@ -15,10 +15,10 @@ export interface TradeCtx {
 
 /**
  * Rarities where spares go on the For Trade list without being picked. The user keeps
- * 2 of every ◆, ★ and ★★ card and trades the rest; on top of that, any ★★ card can be
- * picked by hand, even with only 1 or 2 copies.
+ * 2 of every ◆, ★, ★★ and shiny ✦/✦✦ card and trades the rest; on top of that, any
+ * tradeable card can be picked by hand, even with only 1 or 2 copies.
  */
-export const DEFAULT_AUTO_TRADE_TIERS: RarityTier[] = ['d1', 'd2', 'd3', 'd4', 's1', 's2'];
+export const DEFAULT_AUTO_TRADE_TIERS: RarityTier[] = ['d1', 'd2', 'd3', 'd4', 's1', 's2', 'sh1', 'sh2'];
 
 /** Spares above the keep number would be offered automatically for this card. */
 export function autoQualifies(card: Card, ctx: TradeCtx): boolean {

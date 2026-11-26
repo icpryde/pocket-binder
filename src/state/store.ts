@@ -90,6 +90,8 @@ const RARE_IMPORT = 'import-rare-2026-11-26';
 /** Marks that ★ and ★★ were added to the automatic-trade rarities of an older save. */
 const ONE_STAR_AUTO = 'auto-trade-1-star-2026-11-26';
 const TWO_STAR_AUTO = 'auto-trade-2-star-2026-11-26';
+/** Marks that shiny ✦ and ✦✦ were added to the automatic-trade rarities of an older save. */
+const SHINY_AUTO = 'auto-trade-shiny-2026-11-26';
 const MAX_LOG = 1000;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -134,20 +136,24 @@ function seedState(): CollectionState {
     presets: [],
     log: [],
     trades: [],
-    dismissed: { [STAR_IMPORT]: true, [RARE_IMPORT]: true, [ONE_STAR_AUTO]: true, [TWO_STAR_AUTO]: true },
+    dismissed: { [STAR_IMPORT]: true, [RARE_IMPORT]: true, [ONE_STAR_AUTO]: true, [TWO_STAR_AUTO]: true, [SHINY_AUTO]: true },
   };
 }
 
 /**
- * Older saves traded stars only when picked; ★ and ★★ extras (over the keep number) are
- * now offered like ◆. Done once, and only if the setting still holds an earlier default.
+ * Older saves offered extras automatically for fewer rarities: first ★, then ★★, then
+ * shiny ✦/✦✦ joined ◆. Moves a save to the current default once, and only if its setting
+ * still holds an earlier default, so rarities the user switched off by hand stay off.
  */
-function addStarAuto(s: CollectionState): CollectionState {
-  if (s.dismissed[TWO_STAR_AUTO]) return s;
+function updateAutoTiers(s: CollectionState): CollectionState {
+  if (s.dismissed[SHINY_AUTO]) return s;
   const tiers = [...s.settings.autoTradeTiers].sort().join(',');
-  const oldDefaults = ['d1,d2,d3,d4', 'd1,d2,d3,d4,s1'];
+  // Once the ★★ step has run, anything other than its default was chosen by hand.
+  const oldDefaults = s.dismissed[TWO_STAR_AUTO]
+    ? ['d1,d2,d3,d4,s1,s2']
+    : ['d1,d2,d3,d4', 'd1,d2,d3,d4,s1', 'd1,d2,d3,d4,s1,s2'];
   const settings = oldDefaults.includes(tiers) ? { ...s.settings, autoTradeTiers: [...DEFAULT_AUTO_TRADE_TIERS] } : s.settings;
-  return { ...s, settings, dismissed: { ...s.dismissed, [ONE_STAR_AUTO]: true, [TWO_STAR_AUTO]: true } };
+  return { ...s, settings, dismissed: { ...s.dismissed, [ONE_STAR_AUTO]: true, [TWO_STAR_AUTO]: true, [SHINY_AUTO]: true } };
 }
 
 /** Adds the ★/★★ counts to an older save, once, without touching cards that already have a count. */
@@ -195,7 +201,7 @@ export function normalizeState(raw: Partial<CollectionState> | null | undefined)
 function load(): CollectionState {
   try {
     const text = localStorage.getItem(STORAGE_KEY);
-    if (text) return addStarAuto(addRareCounts(addStarCounts(normalizeState(JSON.parse(text)))));
+    if (text) return updateAutoTiers(addRareCounts(addStarCounts(normalizeState(JSON.parse(text)))));
   } catch {
     /* fall through to the starting data */
   }

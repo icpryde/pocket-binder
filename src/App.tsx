@@ -256,8 +256,9 @@ export default function App() {
           {!dismissed.intro && (
             <div className="banner">
               <p>
-                Your <b>◆◆◆◆</b>, <b>★</b> and <b>★★</b> counts from the game are filled in, and the 7 you need are marked. Extras over 2 go on your For Trade
-                list by themselves. To trade a ★★ you only have 1 or 2 of, use <b>Trade</b> mode and tap it.
+                Your <b>◆◆◆◆</b>, <b>★</b>, <b>★★</b>, <b>★★★</b>, <b>crown</b> and <b>shiny</b> counts from the game are filled in, and the 7 you need are
+                marked. Extras over 2 go on your For Trade list by themselves (★★★ and crown can't be traded). To trade a card you only have 1 or 2 of, use{' '}
+                <b>Trade</b> mode and tap it.
               </p>
               <button className="icon-btn small" onClick={() => store.dismiss('intro')} aria-label="Dismiss">
                 <Icon name="close" size={16} />
