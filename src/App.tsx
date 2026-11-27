@@ -76,6 +76,18 @@ export default function App() {
   const [showFilters, setShowFilters] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // The top bar's height changes with the screen width (it wraps to three rows on a phone) and with the
+  // status bar in the Home Screen app. The filter column and set names pin themselves below it via --top.
+  const topbarObserver = useRef<ResizeObserver | null>(null);
+  const topbarRef = useCallback((el: HTMLElement | null) => {
+    topbarObserver.current?.disconnect();
+    topbarObserver.current = null;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--top', `${el.offsetHeight}px`));
+    ro.observe(el, { box: 'border-box' });
+    topbarObserver.current = ro;
+  }, []);
+
   const setFilters = useCallback((f: Filters) => {
     setFiltersState(f);
     try {
@@ -191,7 +203,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="topbar">
+      <header className="topbar" ref={topbarRef}>
         <div className="brand">
           <span className="logo">PB</span>
           <span className="brand-name">Pocket Binder</span>

@@ -14,7 +14,15 @@
   --shiny: #ff9be6;
   --danger: #ff6b6b;
   --radius: 12px;
+  /* Height of the sticky top bar. App.tsx measures the real height and overwrites this. */
   --top: 64px;
+  /* Notch, status bar and home indicator space. Non-zero on iPhone, mainly as a Home Screen app or in landscape. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  /* Side margin for page content on phones. */
+  --edge: 16px;
   color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
   font-size: 15px;
@@ -50,6 +58,10 @@ html,
 body {
   margin: 0;
   background: var(--bg);
+}
+body {
+  /* Nothing may push the page wider than the screen: on a phone that lets the whole app slide sideways. */
+  overflow-x: clip;
 }
 button,
 input,
@@ -98,9 +110,10 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
-  padding-top: max(10px, env(safe-area-inset-top));
-  min-height: var(--top);
+  padding: 10px max(16px, var(--safe-right)) 10px max(16px, var(--safe-left));
+  /* Room for the status bar when the app runs from the Home Screen. */
+  padding-top: calc(10px + var(--safe-top));
+  min-height: 64px;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -151,6 +164,8 @@ button:disabled {
   background: none;
   outline: none;
   color: var(--text);
+  /* 16px or more, or iPhone Safari zooms the whole page in when the box is tapped and leaves it zoomed. */
+  font-size: 16px;
 }
 .actions {
   display: flex;
@@ -489,6 +504,7 @@ select {
   border: 1px solid var(--line);
   background: var(--panel);
   padding: 0 10px;
+  font-size: 16px;
 }
 
 /* summary + hints */
@@ -921,6 +937,7 @@ select {
   border: 1px solid var(--line);
   background: var(--bg);
   margin-bottom: 8px;
+  font-size: 16px;
 }
 .pick-list {
   list-style: none;
@@ -1124,6 +1141,8 @@ select {
   border: 1px solid var(--line);
   background: var(--bg);
   font-weight: 500;
+  font-size: 16px;
+  min-width: 0;
 }
 .code-box {
   height: auto;
@@ -1135,29 +1154,33 @@ select {
 }
 .tag-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: 6px 16px;
 }
 .tag-row {
   display: grid;
-  grid-template-columns: 1fr 90px;
+  grid-template-columns: minmax(0, 1fr) 90px;
   align-items: center;
   gap: 8px;
   font-size: 13px;
 }
 .tag-row input {
-  height: 32px;
+  /* Fill the 90px column exactly instead of the box's own default width. */
+  width: 100%;
+  min-width: 0;
+  height: 36px;
   padding: 0 8px;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--bg);
+  font-size: 16px;
 }
 
 /* toast */
 .toast {
   position: fixed;
   left: 50%;
-  bottom: max(20px, env(safe-area-inset-bottom));
+  bottom: calc(16px + var(--safe-bottom));
   transform: translateX(-50%);
   z-index: 80;
   display: flex;
@@ -1174,6 +1197,12 @@ select {
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
   font-size: 14px;
   animation: toast-in 0.16s ease-out;
+}
+/* With a card or other sheet open, the bottom of the screen holds its buttons (the − / + on a card),
+   so the message goes to the top instead of covering them. */
+body:has(.modal-backdrop) .toast {
+  top: calc(10px + var(--safe-top));
+  bottom: auto;
 }
 .toast-undo {
   display: inline-flex;
@@ -1196,13 +1225,12 @@ select {
 
 /* ---------- small screens ---------- */
 @media (max-width: 960px) {
-  :root {
-    --top: 112px;
-  }
   .topbar {
     flex-wrap: wrap;
-    padding: 8px 12px;
     gap: 8px;
+    padding: 8px max(var(--edge), var(--safe-right)) 10px max(var(--edge), var(--safe-left));
+    /* The status bar sits over the page when the app runs from the Home Screen, so start below it. */
+    padding-top: calc(8px + var(--safe-top));
   }
   .brand-name {
     display: none;
@@ -1214,11 +1242,23 @@ select {
   .actions {
     margin-left: auto;
   }
+  /* The mode buttons get their own full-width row and share it, so they never run off a narrow phone. */
   .modes {
     order: 2;
+    flex: 1 1 100%;
   }
   .modes button {
-    padding: 7px 10px;
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    padding: 7px 4px;
+  }
+  .modes button svg {
+    flex: none;
+  }
+  /* Set names scroll with the cards on phones: a pinned one would sit under the tall top bar. */
+  .set-head {
+    position: static;
   }
   .hide-sm {
     display: none;
@@ -1237,22 +1277,24 @@ select {
     height: 100dvh;
     background: var(--bg);
     border-right: 1px solid var(--line);
-    padding-top: max(12px, env(safe-area-inset-top));
+    padding: 0 var(--edge) calc(24px + var(--safe-bottom)) max(var(--edge), var(--safe-left));
     transform: translateX(-105%);
     transition: transform 0.2s ease;
   }
   .sidebar.open {
     transform: none;
   }
+  /* Pinned at the very top of the drawer, with the status bar's height added inside it. */
   .sidebar-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     position: sticky;
-    top: -16px;
+    top: 0;
     z-index: 2;
-    margin: -16px -16px 12px;
-    padding: 12px 16px;
+    margin: 0 calc(-1 * var(--edge)) 14px calc(-1 * max(var(--edge), var(--safe-left)));
+    padding: calc(12px + var(--safe-top)) var(--edge) 12px max(var(--edge), var(--safe-left));
     background: var(--bg);
     border-bottom: 1px solid var(--line);
   }
@@ -1268,34 +1310,78 @@ select {
     background: rgba(4, 7, 16, 0.5);
   }
   .main {
-    padding: 12px 12px 40px;
+    padding: 14px max(var(--edge), var(--safe-right)) calc(40px + var(--safe-bottom)) max(var(--edge), var(--safe-left));
   }
   .grid {
     grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-    gap: 8px;
+    gap: 10px;
   }
   .badge {
     height: 22px;
     min-width: 24px;
     font-size: 12px;
   }
+  /* Sheets rise from the bottom and stop short of the status bar, so the title and × stay tappable. */
   .modal-backdrop {
-    padding: 0;
+    padding: calc(12px + var(--safe-top)) var(--safe-right) 0 var(--safe-left);
     place-items: end stretch;
+    /* One row exactly the screen's height, so the sheet's max-height: 100% really caps it there. */
+    grid-template-rows: minmax(0, 1fr);
   }
   .modal,
   .modal-wide {
     width: 100%;
-    max-height: 94dvh;
+    max-height: 100%;
     border-radius: 18px 18px 0 0;
+    border-bottom: 0;
+  }
+  .modal-head {
+    padding: 12px 10px 10px var(--edge);
+  }
+  .modal-head h2 {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .modal-body {
+    padding: 14px var(--edge) 16px;
+    overscroll-behavior: contain;
+  }
+  /* Last thing in the sheet: keep it clear of the home indicator. */
+  .modal-body:last-child {
+    padding-bottom: calc(20px + var(--safe-bottom));
+  }
+  .modal-foot {
+    padding-left: var(--edge);
+    padding-right: var(--edge);
+    padding-bottom: calc(12px + var(--safe-bottom));
   }
   .detail {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
+  /* The card picture is sized by the screen's height, so the − / + buttons fit on screen under it. */
   .detail-art {
-    max-width: 380px;
-    margin: 0 auto;
     width: 100%;
+    margin: 0 auto;
+    grid-template-columns: 40px auto 40px;
+    justify-content: center;
+    gap: 8px;
+  }
+  .detail-img {
+    height: min(44dvh, calc((100vw - 2 * var(--edge) - 96px) * 512 / 367), 540px);
+    width: auto;
+  }
+  .nav-btn {
+    width: 40px;
+  }
+  .stepper {
+    margin-top: 2px;
+  }
+  /* The transfer code box would otherwise zoom the page when tapped (see .search input). */
+  .code-box {
+    font-size: 16px;
   }
   .trade-cols {
     grid-template-columns: 1fr;
@@ -1397,4 +1483,26 @@ select {
   height: 32px;
   padding: 0 10px;
   font-size: 13px;
+}
+
+/* Phone on its side: picture on the left, count buttons on the right, so both fit the short screen. */
+@media (max-width: 960px) and (orientation: landscape) and (max-height: 500px) {
+  .detail {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+  .detail-img {
+    height: min(calc(100dvh - var(--safe-top) - 110px), 420px);
+  }
+}
+
+/* Very narrow phones (320–359px wide): drop the logo so the buttons keep one row,
+   and the mode icons so the five labels still fit. */
+@media (max-width: 359px) {
+  .brand {
+    display: none;
+  }
+  .modes button svg {
+    display: none;
+  }
 }
